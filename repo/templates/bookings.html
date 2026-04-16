@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Bookings — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Bookings</h1>
+
+{% if error %}
+    <div class="error" data-testid="booking-error">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/bookings/create">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div>
+        <label>Member
+            <select name="member_id" required>
+                {% for m in members %}
+                    <option value="{{ m.id }}">{{ m.name }} — {{ m.member_id }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Photographer
+            <select name="photographer_id" required>
+                {% for p in photographers %}
+                    <option value="{{ p.id }}">{{ p.username }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Start <input type="datetime-local" name="start_time" required></label>
+    </div>
+    <div>
+        <label>End <input type="datetime-local" name="end_time" required></label>
+    </div>
+    <button type="submit">Create Booking</button>
+</form>
+
+<div id="booking-list"
+     hx-get="/bookings/list"
+     hx-trigger="every 10s"
+     hx-swap="innerHTML">
+    {% include "partials/booking_list.html" %}
+</div>
+{% endblock %}

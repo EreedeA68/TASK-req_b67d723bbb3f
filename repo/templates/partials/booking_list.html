@@ -1,0 +1,24 @@
+{% if bookings %}
+<table data-testid="booking-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Member</th>
+            <th>Photographer</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for b in bookings %}
+        <tr id="booking-{{ b.id }}" data-testid="booking-row">
+            {% include "partials/booking_row.html" with context %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p data-testid="no-bookings">No bookings found.</p>
+{% endif %}

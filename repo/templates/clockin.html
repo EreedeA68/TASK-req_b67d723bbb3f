@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Clock-In — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Clock-In Kiosk</h1>
+<p><small>
+    Strict mode: {{ 'ON — capture required' if config.CLOCKIN_STRICT else 'OFF — dev/test claim mode' }}.
+    Click <strong>Capture</strong> to simulate a camera snapshot; the browser hashes it before submission.
+</small></p>
+<form id="clockin-form"
+      hx-post="/clock-in/submit"
+      hx-target="#clockin-result"
+      hx-swap="innerHTML">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="face_image_hash" id="face-image-hash" data-testid="face-image-hash">
+    <div>
+        <label>Captured Artifact
+            <input type="text" id="face-artifact" data-testid="face-artifact"
+                   placeholder="(camera bytes will appear here)">
+        </label>
+        <button type="button" data-testid="btn-capture"
+                onclick="captureArtifact()">Capture</button>
+    </div>
+    <div>
+        <label>Face Match Score (fallback; ignored in strict mode when artifact is present)
+            <input type="number" name="face_match_score" step="0.01" min="0" max="1" value="0.90">
+        </label>
+    </div>
+    <div>
+        <label>Brightness <input type="number" name="brightness" step="0.01" min="0" max="1" value="0.70"></label>
+    </div>
+    <div>
+        <label>Face Count <input type="number" name="face_count" min="0" value="1"></label>
+    </div>
+    <div>
+        <label>Device ID <input type="text" name="device_id" value="kiosk-01"></label>
+    </div>
+    <button type="submit">Clock In</button>
+</form>
+<div id="clockin-result" data-testid="clockin-result"></div>
+<script>
+async function captureArtifact() {
+    // Simulated capture — a real kiosk would read bytes from the camera
+    // (e.g., canvas.toDataURL) and hash those bytes.  We hash the text
+    // field contents so operators/tests can drive the flow deterministically.
+    const text = document.getElementById("face-artifact").value
+        || ("snap-" + Date.now() + "-" + Math.random());
+    const buf = new TextEncoder().encode(text);
+    const digest = await crypto.subtle.digest("SHA-256", buf);
+    const hex = Array.from(new Uint8Array(digest))
+        .map(b => b.toString(16).padStart(2, "0")).join("");
+    document.getElementById("face-image-hash").value = hex;
+    document.getElementById("face-artifact").value = text;
+}
+</script>
+
+<hr>
+
+<h2>Clock Out</h2>
+<form hx-post="/clock-in/clock-out"
+      hx-target="#clockout-result"
+      hx-swap="innerHTML">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div>
+        <label>Device ID <input type="text" name="device_id" value="kiosk-01"></label>
+    </div>
+    <button type="submit">Clock Out</button>
+</form>
+<div id="clockout-result" data-testid="clockout-result"></div>
+
+<hr>
+
+<h2>Missed-Punch Correction</h2>
+<form hx-post="/clock-in/correction"
+      hx-target="#correction-result"
+      hx-swap="innerHTML">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div>
+        <label>Punch Type
+            <select name="punch_type">
+                <option value="clock_in">Clock In</option>
+                <option value="clock_out">Clock Out</option>
+            </select>
+        </label>
+    </div>
+    <div>
+        <label>Correct Time <input type="datetime-local" name="requested_time" required></label>
+    </div>
+    <div>
+        <label>Reason <textarea name="reason" rows="2" required placeholder="Explain the missed punch..."></textarea></label>
+    </div>
+    <button type="submit">Submit Correction</button>
+</form>
+<div id="correction-result" data-testid="correction-result"></div>
+{% endblock %}

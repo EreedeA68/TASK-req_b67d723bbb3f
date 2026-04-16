@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Search — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Search</h1>
+
+<input type="search"
+       name="q"
+       placeholder="search members, orders, catalog..."
+       hx-get="/search/results"
+       hx-trigger="keyup changed delay:300ms, search"
+       hx-target="#search-results"
+       hx-swap="innerHTML"
+       hx-include="[name='taxonomy'],[name='region'],[name='habitat'],[name='size_range'],[name='protection_level']"
+       aria-label="global search">
+
+<div data-testid="search-filters">
+    <select name="taxonomy" hx-get="/search/results" hx-trigger="change" hx-target="#search-results" hx-include="[name='q'],[name='region'],[name='habitat'],[name='size_range'],[name='protection_level']">
+        <option value="">All Taxonomy</option>
+        <option value="mammals">Mammals</option>
+        <option value="birds">Birds</option>
+        <option value="reptiles">Reptiles</option>
+        <option value="amphibians">Amphibians</option>
+        <option value="fish">Fish</option>
+    </select>
+
+    <select name="region" hx-get="/search/results" hx-trigger="change" hx-target="#search-results" hx-include="[name='q'],[name='taxonomy'],[name='habitat'],[name='size_range'],[name='protection_level']">
+        <option value="">All Regions</option>
+        <option value="africa">Africa</option>
+        <option value="asia">Asia</option>
+        <option value="europe">Europe</option>
+        <option value="north_america">North America</option>
+        <option value="south_america">South America</option>
+        <option value="oceania">Oceania</option>
+    </select>
+
+    <select name="habitat" hx-get="/search/results" hx-trigger="change" hx-target="#search-results" hx-include="[name='q'],[name='taxonomy'],[name='region'],[name='size_range'],[name='protection_level']">
+        <option value="">All Habitats</option>
+        <option value="forest">Forest</option>
+        <option value="savanna">Savanna</option>
+        <option value="wetland">Wetland</option>
+        <option value="desert">Desert</option>
+        <option value="ocean">Ocean</option>
+        <option value="mountain">Mountain</option>
+    </select>
+
+    <select name="size_range" hx-get="/search/results" hx-trigger="change" hx-target="#search-results" hx-include="[name='q'],[name='taxonomy'],[name='region'],[name='habitat'],[name='protection_level']">
+        <option value="">All Sizes</option>
+        <option value="small">Small</option>
+        <option value="medium">Medium</option>
+        <option value="large">Large</option>
+    </select>
+
+    <select name="protection_level" hx-get="/search/results" hx-trigger="change" hx-target="#search-results" hx-include="[name='q'],[name='taxonomy'],[name='region'],[name='habitat'],[name='size_range']">
+        <option value="">All Protection Levels</option>
+        <option value="endangered">Endangered</option>
+        <option value="vulnerable">Vulnerable</option>
+        <option value="near_threatened">Near Threatened</option>
+        <option value="least_concern">Least Concern</option>
+    </select>
+</div>
+
+<div id="search-suggestions" data-testid="search-suggestions"
+     hx-get="/search/suggestions"
+     hx-trigger="load"
+     hx-swap="innerHTML">
+</div>
+
+<div id="search-results" data-testid="search-results">
+    <em>Start typing to search...</em>
+</div>
+{% endblock %}

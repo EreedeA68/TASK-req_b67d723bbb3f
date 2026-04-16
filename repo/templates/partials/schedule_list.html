@@ -1,0 +1,26 @@
+{% if schedules %}
+<table data-testid="schedule-table">
+    <thead>
+        <tr>
+            <th>Photographer</th>
+            <th>Date</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Type</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for s in schedules %}
+        <tr data-testid="schedule-row">
+            <td>{{ s.photographer.username if s.photographer else s.photographer_id }}</td>
+            <td>{{ s.date }}</td>
+            <td>{{ s.start_time }}</td>
+            <td>{{ s.end_time }}</td>
+            <td>{{ s.type }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p data-testid="no-schedules">No schedules found.</p>
+{% endif %}

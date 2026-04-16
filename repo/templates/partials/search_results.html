@@ -1,0 +1,44 @@
+{% if not query %}
+    <em>Start typing to search...</em>
+{% else %}
+    {% if members or orders or catalog_items %}
+        {% if members %}
+        <h3>Members</h3>
+        <ul data-testid="search-members">
+            {% for m in members %}
+            <li>
+                <strong>{{ (m.name_highlighted or m.name)|safe }}</strong> — {{ m.member_id }} — {{ m.phone_number }}
+                ({{ m.tier }})
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if orders %}
+        <h3>Orders</h3>
+        <ul data-testid="search-orders">
+            {% for o in orders %}
+            <li>
+                Order #{{ o.id }} — status: {{ (o.status_highlighted or o.status)|safe }} — total: ${{ "%.2f"|format(o.total) }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if catalog_items %}
+        <h3>Catalog Items</h3>
+        <ul data-testid="search-catalog">
+            {% for item in catalog_items %}
+            <li>
+                <strong>{{ (item.name_highlighted or item.name)|safe }}</strong> — {{ item.category }}
+                {% if item.taxonomy %}| {{ item.taxonomy }}{% endif %}
+                {% if item.region %}| {{ item.region }}{% endif %}
+                — ${{ "%.2f"|format(item.price) }}
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    {% else %}
+        <p data-testid="no-search-results">No results for "{{ query }}".</p>
+    {% endif %}
+{% endif %}

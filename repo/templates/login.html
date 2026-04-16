@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Login — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Login</h1>
+
+<form method="post" action="/auth/login"
+      hx-post="/auth/login"
+      hx-target="#login-result"
+      hx-swap="innerHTML">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div>
+        <label>Username
+            <input type="text" name="username" required autocomplete="username">
+        </label>
+    </div>
+    <div>
+        <label>Password
+            <input type="password" name="password" required autocomplete="current-password">
+        </label>
+    </div>
+    <button type="submit">Log in</button>
+</form>
+
+<div id="login-result">
+    {% if error %}
+        <div class="error" data-testid="login-error">{{ error }}</div>
+    {% endif %}
+</div>
+{% endblock %}

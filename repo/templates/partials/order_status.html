@@ -1,0 +1,74 @@
+<div class="card" data-testid="order-status-card">
+    <p>
+        Current status:
+        <span class="status" data-testid="order-status">{{ order.status }}</span>
+    </p>
+
+    {% if order.created_at %}
+    <p class="countdown-badge" data-testid="countdown-badge" data-created="{{ order.created_at.isoformat() }}" data-status="{{ order.status }}">
+        {% if order.status == "created" %}
+            <span id="countdown-text-{{ order.id }}" style="color: #b00020;">&#9200; Auto-cancels in 30 min if unpaid</span>
+        {% elif order.status == "ready" %}
+            <span id="countdown-text-{{ order.id }}" style="color: #e65100;">&#9200; Moves to pickup after 4 hours</span>
+        {% elif order.status == "ready_for_pickup" %}
+            <span id="countdown-text-{{ order.id }}" style="color: #b00020;">&#9200; Unclaimed — will be cancelled at next reconciliation check</span>
+        {% endif %}
+    </p>
+    {% set deadline = order.deadline_at() %}
+    {% if deadline %}
+    <script>
+    (function() {
+        var el = document.getElementById("countdown-text-{{ order.id }}");
+        if (!el) return;
+        // Server-computed deadline from correct event timestamps.
+        var deadlineMs = new Date("{{ deadline.isoformat() }}Z").getTime();
+        var status = "{{ order.status }}";
+        function tick() {
+            var left = Math.max(0, Math.floor((deadlineMs - Date.now())/1000));
+            var m = Math.floor(left/60), s = left%60;
+            if (status === "ready_for_pickup") {
+                el.textContent = "\u23F0 Unclaimed \u2014 pending reconciliation cancel";
+                return;
+            }
+            var label = status === "created" ? "Auto-cancels" : status === "ready" ? "Moves to pickup" : "Expires";
+            el.textContent = "\u23F0 " + label + " in " + m + "m " + (s<10?"0":"") + s + "s";
+            if (left > 0) setTimeout(tick, 1000);
+        }
+        tick();
+    })();
+    </script>
+    {% endif %}
+    {% endif %}
+
+    {% if error is defined and error %}
+        <p class="error" data-testid="order-error">{{ error }}</p>
+    {% endif %}
+
+    <div>
+        {% if order.status == "created" %}
+            <div data-testid="redeem-section">
+                <label>Redeem Points (1 pt = $1, max 20% of subtotal)
+                    <input type="number" name="redeem_points" min="0" value="0"
+                           data-testid="redeem-points-input"
+                           id="redeem-points-{{ order.id }}">
+                </label>
+            </div>
+            <button hx-post="/orders/{{ order.id }}/pay"
+                    hx-target="#order-status"
+                    hx-swap="innerHTML"
+                    hx-include="#redeem-points-{{ order.id }}"
+                    data-testid="btn-pay">
+                Pay
+            </button>
+        {% elif order.status in ("reviewed", "cancelled") %}
+            <em>Order {% if order.status == "reviewed" %}fully complete{% else %}cancelled{% endif %}.</em>
+        {% else %}
+            <button hx-post="/orders/{{ order.id }}/advance"
+                    hx-target="#order-status"
+                    hx-swap="innerHTML"
+                    data-testid="btn-advance">
+                Advance Status
+            </button>
+        {% endif %}
+    </div>
+</div>

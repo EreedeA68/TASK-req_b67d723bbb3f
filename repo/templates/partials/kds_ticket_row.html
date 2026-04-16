@@ -1,0 +1,24 @@
+{% set ticket = ticket if ticket is defined else t %}
+<td>{{ ticket.id }}</td>
+<td>{{ ticket.order_id }}</td>
+<td>{{ ticket.station }}</td>
+<td>{{ ticket.priority }}</td>
+<td>{{ ticket.eta_minutes }}</td>
+<td data-testid="kds-status">{{ ticket.status }}</td>
+<td data-testid="kds-late">{% if ticket.is_late() %}<strong class="error">{{ ticket.late_alert() }}</strong>{% else %}OK{% endif %}</td>
+<td>{% if ticket.allergy_flag %}<strong class="error">ALLERGY</strong>{% else %}-{% endif %}</td>
+<td>
+    {% if ticket.status == "pending" %}
+        <button hx-post="/kds/{{ ticket.id }}/start"
+                hx-target="#kds-{{ ticket.id }}"
+                hx-swap="innerHTML"
+                data-testid="btn-start">Start</button>
+    {% elif ticket.status == "in_progress" %}
+        <button hx-post="/kds/{{ ticket.id }}/complete"
+                hx-target="#kds-{{ ticket.id }}"
+                hx-swap="innerHTML"
+                data-testid="btn-complete">Complete</button>
+    {% else %}
+        <em>done</em>
+    {% endif %}
+</td>

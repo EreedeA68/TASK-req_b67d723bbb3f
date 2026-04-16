@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Data Versions — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Data Versioning</h1>
+
+{% if error %}
+    <div class="error" data-testid="version-error">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/versions/snapshot">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Entity type
+        <select name="entity_type">
+            <option value="member">member</option>
+            <option value="order">order</option>
+        </select>
+    </label>
+    <label>Entity ID <input type="number" name="entity_id" min="1" required></label>
+    <button type="submit">Create Snapshot</button>
+</form>
+
+{% if versions %}
+<table data-testid="version-table">
+    <thead>
+        <tr><th>ID</th><th>Type</th><th>Entity</th><th>Created</th></tr>
+    </thead>
+    <tbody>
+    {% for v in versions %}
+        <tr data-testid="version-row">
+            <td>{{ v.id }}</td>
+            <td>{{ v.entity_type }}</td>
+            <td>{{ v.entity_id }}</td>
+            <td>{{ v.created_at }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p data-testid="no-versions">No snapshots yet.</p>
+{% endif %}
+{% endblock %}

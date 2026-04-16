@@ -1,0 +1,26 @@
+{% if tickets %}
+<table data-testid="kds-table">
+    <thead>
+        <tr>
+            <th>Ticket</th>
+            <th>Order</th>
+            <th>Station</th>
+            <th>Priority</th>
+            <th>ETA (min)</th>
+            <th>Status</th>
+            <th>Late?</th>
+            <th>Allergy</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for t in tickets %}
+        <tr id="kds-{{ t.id }}" data-testid="kds-row">
+            {% include "partials/kds_ticket_row.html" with context %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p data-testid="no-tickets">No KDS tickets.</p>
+{% endif %}

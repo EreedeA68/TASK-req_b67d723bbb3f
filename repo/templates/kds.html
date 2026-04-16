@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}KDS — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Kitchen Display System</h1>
+
+<div>
+    <label>Filter station:
+        <select hx-get="/kds/tickets"
+                hx-target="#kds-board"
+                hx-swap="innerHTML"
+                hx-include="this"
+                name="station">
+            <option value="">All</option>
+            <option value="grill">Grill</option>
+            <option value="bar">Bar</option>
+            <option value="pastry">Pastry</option>
+            <option value="cold">Cold</option>
+            <option value="hot">Hot</option>
+        </select>
+    </label>
+</div>
+
+<div id="kds-board"
+     hx-get="/kds/tickets{% if station %}?station={{ station }}{% endif %}"
+     hx-trigger="every 5s"
+     hx-swap="innerHTML">
+    {% include "partials/kds_tickets.html" %}
+</div>
+{% endblock %}

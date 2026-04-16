@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Member Lookup — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Member Lookup</h1>
+<p>Search by phone number or member ID.</p>
+
+<input type="search"
+       name="q"
+       placeholder="phone or member id"
+       hx-get="/members/lookup"
+       hx-trigger="keyup changed delay:300ms, search"
+       hx-target="#member-result"
+       hx-swap="innerHTML"
+       aria-label="member search">
+
+<div id="member-result" data-testid="member-result">
+    <em>Start typing to search…</em>
+</div>
+{% endblock %}

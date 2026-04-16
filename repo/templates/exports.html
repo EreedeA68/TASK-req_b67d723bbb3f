@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Exports — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Data Exports</h1>
+
+{% if error %}
+    <div class="error" data-testid="export-error">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/exports/create">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Export type
+        <select name="type" required>
+            <option value="orders">Orders</option>
+            <option value="members">Members</option>
+            <option value="bookings">Bookings</option>
+        </select>
+    </label>
+    <button type="submit">Export CSV</button>
+</form>
+
+{% if jobs %}
+<table data-testid="export-table">
+    <thead>
+        <tr><th>ID</th><th>Type</th><th>File</th><th>Created</th></tr>
+    </thead>
+    <tbody>
+    {% for j in jobs %}
+        <tr data-testid="export-row">
+            <td>{{ j.id }}</td>
+            <td>{{ j.type }}</td>
+            <td>{{ j.file_path }}</td>
+            <td>{{ j.created_at }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p data-testid="no-exports">No exports yet.</p>
+{% endif %}
+{% endblock %}

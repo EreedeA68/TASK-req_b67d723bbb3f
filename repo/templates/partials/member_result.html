@@ -1,0 +1,37 @@
+{% if not query %}
+    <em>Start typing to search…</em>
+{% elif member %}
+    <div class="card" data-testid="member-card">
+        <h3>{{ member.name }}</h3>
+        <p><strong>Member ID:</strong> <span data-testid="member-id">{{ member.member_id }}</span></p>
+        <p><strong>Phone:</strong> <span data-testid="member-phone">{{ member.phone_number }}</span></p>
+        <p>
+            <strong>Tier:</strong>
+            <span data-testid="member-tier">{{ member.tier }}</span>
+            {% if member.tier_description %}<em>— {{ member.tier_description }}</em>{% endif %}
+        </p>
+        {% if member.tier_benefits %}
+        <div data-testid="tier-benefits">
+            <strong>Tier benefits:</strong>
+            <ul>
+                {% for b in member.tier_benefits %}<li>{{ b }}</li>{% endfor %}
+            </ul>
+            <small>Max checkout discount: {{ (member.tier_max_discount_pct * 100)|int }}%</small>
+        </div>
+        {% endif %}
+        <p><strong>Points:</strong> <span data-testid="member-points">{{ member.points_balance }}</span></p>
+        <p><strong>Stored Value:</strong> <span data-testid="member-balance">{{ member.stored_value_balance }}</span></p>
+        <a href="/orders/create">Create order for this member</a>
+    </div>
+{% elif extras %}
+    <div data-testid="member-results">
+        <p>Multiple matches for "{{ query }}":</p>
+        <ul>
+            {% for m in extras %}
+                <li>{{ m.name }} — {{ m.member_id }} — {{ m.phone_number }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% else %}
+    <p data-testid="no-results" class="error">No member found for "{{ query }}".</p>
+{% endif %}

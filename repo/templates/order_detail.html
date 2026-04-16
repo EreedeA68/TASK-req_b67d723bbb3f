@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }} — WildLifeLens{% endblock %}
+{% block content %}
+<h1>Order #{{ order.id }}</h1>
+
+<div class="card">
+    <p><strong>Member:</strong> {{ member.name }} ({{ member.member_id }})</p>
+    <p><strong>Subtotal:</strong> ${{ "%.2f"|format(order.subtotal) }}</p>
+    <p><strong>Discount:</strong> ${{ "%.2f"|format(order.discount) }}</p>
+    <p><strong>Total:</strong> ${{ "%.2f"|format(order.total) }}</p>
+    <p><strong>Created:</strong> {{ order.created_at }}</p>
+</div>
+
+<div id="order-status">
+    {% include "partials/order_status.html" %}
+</div>
+
+{% if order.receipt %}
+<div class="card" data-testid="receipt">
+    <h3>Receipt</h3>
+    <p>Subtotal: ${{ "%.2f"|format(order.receipt.subtotal) }}</p>
+    <p>Discount: ${{ "%.2f"|format(order.receipt.discount) }}</p>
+    {% if order.receipt.points_redeemed > 0 %}
+    <p>Points Redeemed: {{ order.receipt.points_redeemed }} (-${{ "%.2f"|format(order.receipt.points_value) }})</p>
+    {% endif %}
+    <p><strong>Total: ${{ "%.2f"|format(order.receipt.total) }}</strong></p>
+    <p>Points Earned: {{ order.receipt.points_earned }}</p>
+    {% if order.receipt.note %}
+    <p>Note: {{ order.receipt.note }}</p>
+    {% endif %}
+    <button type="button"
+            data-testid="btn-print-receipt"
+            onclick="(async () => {
+                const r = await fetch('/api/orders/{{ order.id }}/receipt/print', {headers:{'Accept':'text/plain'}});
+                const text = await r.text();
+                const w = window.open('', '_blank');
+                w.document.write('<pre>' + text.replace(/</g,'&lt;') + '</pre>');
+                w.document.close();
+                w.print();
+            })()">
+        Print Receipt
+    </button>
+</div>
+{% endif %}
+{% endblock %}

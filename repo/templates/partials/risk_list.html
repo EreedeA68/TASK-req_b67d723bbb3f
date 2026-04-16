@@ -1,0 +1,37 @@
+{% if flags %}
+<table data-testid="risk-table">
+    <thead>
+        <tr><th>ID</th><th>User/Member</th><th>Type</th><th>Active</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+    {% for f in flags %}
+        <tr data-testid="risk-row">
+            <td>{{ f.id }}</td>
+            <td>
+                {% if f.user %}{{ f.user.username }}{% elif f.user_id %}User #{{ f.user_id }}{% endif %}
+                {% if f.member_id %}Member #{{ f.member_id }}{% endif %}
+            </td>
+            <td data-testid="risk-type">{{ f.type }}</td>
+            <td data-testid="risk-active">{{ f.active }}</td>
+            <td>
+                {% if f.active %}
+                    {% if f.member_id %}
+                    <button hx-post="/risk/member/{{ f.member_id }}/clear"
+                            hx-target="#risk-list"
+                            hx-swap="innerHTML"
+                            data-testid="btn-clear-member">Clear (Member)</button>
+                    {% elif f.user_id %}
+                    <button hx-post="/risk/{{ f.user_id }}/clear"
+                            hx-target="#risk-list"
+                            hx-swap="innerHTML"
+                            data-testid="btn-clear">Clear</button>
+                    {% endif %}
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p data-testid="no-flags">No active risk flags.</p>
+{% endif %}

@@ -1,0 +1,26 @@
+{% set booking = booking if booking is defined else b %}
+<td>{{ booking.id }}</td>
+<td>{{ booking.member.name if booking.member else booking.member_id }}</td>
+<td>{{ booking.photographer.username if booking.photographer else booking.photographer_id }}</td>
+<td>{{ booking.start_time }}</td>
+<td>{{ booking.end_time }}</td>
+<td data-testid="booking-status">{{ booking.status }}</td>
+<td>
+    {% if booking.status == "locked" %}
+        <button hx-post="/bookings/{{ booking.id }}/confirm"
+                hx-target="#booking-{{ booking.id }}"
+                hx-swap="innerHTML"
+                data-testid="btn-confirm">Confirm</button>
+        <button hx-post="/bookings/{{ booking.id }}/cancel"
+                hx-target="#booking-{{ booking.id }}"
+                hx-swap="innerHTML"
+                data-testid="btn-cancel">Cancel</button>
+    {% elif booking.status == "confirmed" %}
+        <button hx-post="/bookings/{{ booking.id }}/cancel"
+                hx-target="#booking-{{ booking.id }}"
+                hx-swap="innerHTML"
+                data-testid="btn-cancel">Cancel</button>
+    {% else %}
+        <em>{{ booking.status }}</em>
+    {% endif %}
+</td>

@@ -1,0 +1,16 @@
+<div data-testid="search-recent">
+    <strong>Recent:</strong>
+    {% for r in recent %}
+        <a href="#" hx-get="/search/results?q={{ r.term }}" hx-target="#search-results" hx-swap="innerHTML">{{ r.term }}</a>{% if not loop.last %}, {% endif %}
+    {% else %}
+        <em>No recent searches</em>
+    {% endfor %}
+</div>
+<div data-testid="search-trending">
+    <strong>Trending:</strong>
+    {% for t in trending %}
+        <a href="#" hx-get="/search/results?q={{ t.term }}" hx-target="#search-results" hx-swap="innerHTML">{{ t.term }} ({{ t.count }})</a>{% if not loop.last %}, {% endif %}
+    {% else %}
+        <em>No trending searches</em>
+    {% endfor %}
+</div>

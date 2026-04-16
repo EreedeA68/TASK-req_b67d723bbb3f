@@ -1,0 +1,13 @@
+{% if error %}
+    <div class="error" data-testid="clockin-error">{{ error }}</div>
+{% elif result %}
+    {% if result.success %}
+        <div class="ok" data-testid="clockin-success">
+            Clock-in successful. Signature: {{ result.signature[:12] }}...
+        </div>
+    {% else %}
+        <div class="error" data-testid="clockin-failure">
+            Clock-in failed: {{ result.reason }}
+        </div>
+    {% endif %}
+{% endif %}
