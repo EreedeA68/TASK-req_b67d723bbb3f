@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      FERNET_KEY: ${FERNET_KEY:-}
+      CLOCKIN_STRICT: ${CLOCKIN_STRICT:-false}
+    volumes:
+      - db_data:/app/instance
+    restart: unless-stopped
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      SECRET_KEY: test-docker-secret-key
+      PYTHONDONTWRITEBYTECODE: "1"
+    command: pytest --tb=short -q
+    profiles:
+      - test
+
+volumes:
+  db_data:
