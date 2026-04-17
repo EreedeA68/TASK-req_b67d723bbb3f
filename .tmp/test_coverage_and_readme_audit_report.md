@@ -1,25 +1,35 @@
-Tests Check
-- Project shape: backend-heavy Flask + SQLite app with API and server-rendered HTMX views. Materially relevant categories are API tests, integration tests, end-to-end workflow tests, and UI route/render tests; frontend component-test frameworks are not strictly required for this architecture.
-- Present and meaningful:
-  - API tests: Extensive request-path testing via Flask test client across auth, members, orders, schedules, bookings, KDS, search, clock-in, exports, risk, permissions, points, stored value, and versioning.
-  - Integration tests: Strong DB/service + auth/permission integration (RBAC/ABAC record/field scope, masking, audit events, encryption behavior, expiry logic).
-  - End-to-end tests: `tests/test_e2e/*` covers multi-step business workflows (order lifecycle, booking lifecycle, KDS flow, risk clear flow, version rollback, clock-in scenarios).
-  - UI tests: `tests/test_ui/*` and several feature view tests validate HTML/HTMX behavior, partial responses, redirects, and role/permission outcomes.
-  - Unit tests: Present but secondary (state-machine and targeted service-level invariants).
-- Appropriateness/sufficiency: For the delivered backend/fullstack scope, the suite is broad and mostly confidence-building, with substantial success and failure-path assertions and little evidence of over-mocking (only a narrow mock usage in search error handling).
-- `run_tests.sh` static check:
-  - Exists and is Docker-first for main flow (`docker build` + `docker run ... pytest`), then Dockerized RBAC smoke-check.
-  - Main test flow does not depend on local Python/Node; it does depend on host Docker and Bash.
-  - No Bash-only substitute issue: real application tests are in Python/pytest.
+# Tests Coverage And Sufficiency Review
 
-Test Coverage Score
-88/100
+## Tests Check
+Project shape is backend-heavy Flask + SQLite with server-rendered HTMX UI, so the materially relevant categories are API, integration, E2E flow, UI/view, and some unit tests.
 
-Score Rationale
-- High score for strong breadth across critical domains, meaningful negative-path coverage, real in-app request execution, and explicit permission/validation/integration boundary testing.
-- Not higher because “e2e” is mostly in-process test-client flow (not true browser/runtime boundary), some flows call services directly within e2e tests, and committed coverage artifacts were not found despite a 90% threshold configured in `pytest.ini`.
+Present and meaningful:
+- API tests: Extensive (`tests/test_auth`, `test_members`, `test_orders`, `test_bookings`, `test_kds`, `test_search`, `test_clockin`, `test_permissions`, `test_points`, `test_stored_value`, `test_versioning`, etc.) using real Flask `test_client` requests and DB/audit assertions.
+- Integration tests: Strong route→service→model coverage with persisted state checks, scope/permission enforcement, and audit-log verification.
+- End-to-end tests: Present (`tests/test_e2e/*`) with multi-step no-mock flows (auth/member/order/pay/advance, schedule-booking, KDS, expiry, risk/export/versioning).
+- UI/view tests: Strong server-rendered/HTMX partial coverage (`tests/test_ui/*`) including auth redirects, partial-vs-full response behavior, role restrictions, and form failure cases.
+- Unit tests: Present but lighter (state machine, encryption/security helpers, selected service validations).
 
-Key Gaps
-- True fullstack/browser E2E gap: no browser-driven tests proving frontend-backend behavior under real JS/HTMX runtime and deployed-server conditions.
-- Some e2e scenarios partially bypass API boundaries by invoking services directly (`auth_service`, `kds_service`, `risk_service`), reducing pure black-box confidence.
-- Coverage evidence gap: `pytest.ini` enforces `--cov-fail-under=90`, but no `coverage.json` artifact was present in this repo snapshot to corroborate achieved percentage.
+Not materially required for this repo:
+- Frontend component tests in a JS SPA framework (this repo is not a componentized SPA).
+
+`run_tests.sh` check (static inspection):
+- Exists and is Docker-first for the main flow: builds `Dockerfile.test`, runs `pytest` in container, then runs a containerized RBAC smoke-check.
+- Main test flow does not depend on local Python/Node package setup; host requirement is Docker (and shell script execution).
+
+Sufficiency assessment:
+- Suite is broadly confidence-building and not placeholder-level.
+- Most critical paths are exercised through real request/response behavior rather than transport/path-wide mocking.
+- Mocking exists but appears targeted (for specific error/timer/validation seams), not the dominant pattern.
+
+## Test Coverage Score
+**88/100**
+
+## Score Rationale
+Coverage breadth and depth are strong for shipped backend and server-rendered UI behavior, with explicit gates (`--cov --cov-branch --cov-fail-under=90`) and coverage artifact totals around ~92% statement/line and ~82% branch. Score stays below 90 because E2E is still in-process client based (not real browser/runtime boundary) and some branch-heavy risk paths remain thinner than core happy paths.
+
+## Key Gaps
+- No true browser-level E2E across a real frontend/backend runtime boundary; current E2E remains Flask test-client driven.
+- Branch coverage is materially below line/statement coverage (~82% branch), indicating meaningful conditional/error paths still unexercised.
+- Some high-risk service logic is comparatively weaker than the rest (for example `app/services/order_service.py` is notably lower than many modules in coverage artifact).
+- Background ticker resilience behavior is only partially tested; timer-loop exception/recovery behavior remains a moderate risk area.

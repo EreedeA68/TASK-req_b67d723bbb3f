@@ -113,3 +113,34 @@ def test_ui_member_partial_shows_masked_phone(client, logged_in_staff, seeded_me
     assert resp.status_code == 200
     assert b"****" in resp.data
     assert b"5551234567" not in resp.data
+
+
+# --- security.py (password hashing) coverage ---
+
+def test_hash_password_empty_string_raises():
+    import pytest
+    from app.core.security import hash_password
+    with pytest.raises(ValueError, match="non-empty"):
+        hash_password("")
+
+
+def test_hash_password_none_raises():
+    import pytest
+    from app.core.security import hash_password
+    with pytest.raises(ValueError):
+        hash_password(None)
+
+
+def test_verify_password_empty_plain_returns_false():
+    from app.core.security import verify_password
+    assert verify_password("", "somehash") is False
+
+
+def test_verify_password_empty_hashed_returns_false():
+    from app.core.security import verify_password
+    assert verify_password("password", "") is False
+
+
+def test_verify_password_malformed_hash_returns_false():
+    from app.core.security import verify_password
+    assert verify_password("password", "not-a-bcrypt-hash") is False

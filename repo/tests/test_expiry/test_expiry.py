@@ -84,6 +84,40 @@ def test_in_prep_order_not_expired(
     assert resp.get_json()["status"] == "in_prep"
 
 
+def test_check_order_expiry_none_is_noop(app):
+    from app.services.expiry_service import check_order_expiry
+    result = check_order_expiry(None)
+    assert result is None
+
+
+def test_stop_expiry_ticker_noop_when_no_timer(app):
+    from app.services import expiry_service
+    expiry_service._expiry_timer = None
+    expiry_service.stop_expiry_ticker()  # should not raise
+
+
+def test_expiry_ticker_start_and_stop_when_not_testing():
+    from unittest.mock import MagicMock, patch
+    from app.services import expiry_service
+
+    fake_app = MagicMock()
+    fake_app.config.get.side_effect = lambda k, d=None: False if k == "TESTING" else d
+
+    timer_mock = MagicMock()
+    with patch.object(expiry_service, "process_all_expired_orders", return_value={}):
+        with patch("app.services.expiry_service.threading") as mock_threading:
+            mock_threading.Timer.return_value = timer_mock
+            expiry_service.start_expiry_ticker(fake_app)
+
+    assert mock_threading.Timer.called
+    timer_mock.start.assert_called_once()
+    assert expiry_service._expiry_timer is timer_mock
+
+    expiry_service.stop_expiry_ticker()
+    timer_mock.cancel.assert_called_once()
+    assert expiry_service._expiry_timer is None
+
+
 def test_expired_order_cannot_be_paid(
     app, client, logged_in_staff, seeded_member
 ):

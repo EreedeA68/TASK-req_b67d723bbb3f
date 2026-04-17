@@ -223,3 +223,126 @@ def test_booking_confirm_partial(
     assert resp.status_code == 200
     assert b"<html" not in resp.data
     assert b"confirmed" in resp.data
+
+
+# --- booking_service service-level error paths ---
+
+def test_check_access_none_booking_raises(app, staff_user):
+    import pytest
+    from app.services.booking_service import BookingAccessDenied, check_access
+    with pytest.raises(BookingAccessDenied):
+        check_access(None, staff_user.id)
+
+
+def test_check_access_none_actor_raises(app, photographer_user, seeded_member, future_booking_times):
+    import pytest
+    from app.services.booking_service import BookingAccessDenied, check_access, create_booking
+    start, end = future_booking_times
+    booking = create_booking(
+        member_id=seeded_member.id,
+        photographer_id=photographer_user.id,
+        start_time=start,
+        end_time=end,
+    )
+    with pytest.raises(BookingAccessDenied):
+        check_access(booking, None)
+
+
+def test_check_access_unknown_actor_raises(app, photographer_user, seeded_member, future_booking_times):
+    import pytest
+    from app.services.booking_service import BookingAccessDenied, check_access, create_booking
+    start, end = future_booking_times
+    booking = create_booking(
+        member_id=seeded_member.id,
+        photographer_id=photographer_user.id,
+        start_time=start,
+        end_time=end,
+    )
+    with pytest.raises(BookingAccessDenied):
+        check_access(booking, 99999)
+
+
+def test_create_booking_none_member_id_raises(app, photographer_user, future_booking_times):
+    import pytest
+    from app.services.booking_service import BookingError, create_booking
+    start, end = future_booking_times
+    with pytest.raises(BookingError, match="member_id is required"):
+        create_booking(member_id=None, photographer_id=photographer_user.id, start_time=start, end_time=end)
+
+
+def test_create_booking_none_photographer_id_raises(app, seeded_member, future_booking_times):
+    import pytest
+    from app.services.booking_service import BookingError, create_booking
+    start, end = future_booking_times
+    with pytest.raises(BookingError, match="photographer_id is required"):
+        create_booking(member_id=seeded_member.id, photographer_id=None, start_time=start, end_time=end)
+
+
+def test_create_booking_member_not_found_raises(app, photographer_user, future_booking_times):
+    import pytest
+    from app.services.booking_service import BookingError, create_booking
+    start, end = future_booking_times
+    with pytest.raises(BookingError, match="member not found"):
+        create_booking(member_id=99999, photographer_id=photographer_user.id, start_time=start, end_time=end)
+
+
+def test_create_booking_photographer_not_found_raises(app, seeded_member, future_booking_times):
+    import pytest
+    from app.services.booking_service import BookingError, create_booking
+    start, end = future_booking_times
+    with pytest.raises(BookingError, match="photographer not found"):
+        create_booking(member_id=seeded_member.id, photographer_id=99999, start_time=start, end_time=end)
+
+
+def test_create_booking_non_photographer_user_raises(app, seeded_member, staff_user, future_booking_times):
+    import pytest
+    from app.services.booking_service import BookingError, create_booking
+    start, end = future_booking_times
+    with pytest.raises(BookingError, match="not a photographer"):
+        create_booking(
+            member_id=seeded_member.id, photographer_id=staff_user.id,
+            start_time=start, end_time=end,
+        )
+
+
+def test_confirm_none_booking_raises(app):
+    import pytest
+    from app.services.booking_service import BookingError, confirm_booking
+    with pytest.raises(BookingError, match="required"):
+        confirm_booking(None)
+
+
+def test_cancel_none_booking_raises(app):
+    import pytest
+    from app.services.booking_service import BookingError, cancel_booking
+    with pytest.raises(BookingError, match="required"):
+        cancel_booking(None)
+
+
+def test_list_bookings_photographer_filter(app, photographer_user, seeded_member, future_booking_times):
+    from app.services.booking_service import create_booking, list_bookings
+    start, end = future_booking_times
+    create_booking(
+        member_id=seeded_member.id, photographer_id=photographer_user.id,
+        start_time=start, end_time=end,
+    )
+    results = list_bookings(photographer_id=photographer_user.id, include_expired_locks=True)
+    assert all(b.photographer_id == photographer_user.id for b in results)
+
+
+def test_list_bookings_non_staff_actor_scoped(app, photographer_user, seeded_member, future_booking_times):
+    from app.services.booking_service import create_booking, list_bookings
+    start, end = future_booking_times
+    create_booking(
+        member_id=seeded_member.id, photographer_id=photographer_user.id,
+        start_time=start, end_time=end,
+    )
+    results = list_bookings(actor_id=photographer_user.id, include_expired_locks=True)
+    assert len(results) >= 1
+
+
+def test_get_availability(app, photographer_user, future_booking_times):
+    from app.services.booking_service import get_availability
+    start, end = future_booking_times
+    available = get_availability(photographer_user.id, start, end)
+    assert available is True

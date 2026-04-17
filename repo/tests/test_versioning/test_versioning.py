@@ -160,3 +160,55 @@ def test_version_api_list(client, logged_in_admin, seeded_member):
     resp = client.get(f"/api/versions?entity_type=member&entity_id={seeded_member.id}")
     assert resp.status_code == 200
     assert len(resp.get_json()["results"]) >= 1
+
+
+def test_validate_member_missing_member_id(app, seeded_member):
+    from app.db import db
+    from app.services.versioning_service import validate_member
+    seeded_member.member_id = ""
+    db.session.commit()
+    errors = validate_member(seeded_member)
+    assert any("member_id" in e for e in errors)
+
+
+def test_validate_member_duplicate_member_id(app, seeded_member):
+    from unittest.mock import MagicMock, patch
+    from app.services.versioning_service import validate_member
+    fake_dup = MagicMock()
+    with patch("app.services.versioning_service.Member") as mock_member_cls:
+        mock_member_cls.query.filter.return_value.first.return_value = fake_dup
+        errors = validate_member(seeded_member)
+    assert any("duplicate" in e for e in errors)
+
+
+def test_validate_order_with_negative_values(app, seeded_member):
+    from app.db import db
+    from app.services import order_service
+    from app.services.versioning_service import validate_order
+    order = order_service.create_order(member_id=seeded_member.id, subtotal=10.0)
+    order.subtotal = -1.0
+    order.total = -1.0
+    db.session.commit()
+    errors = validate_order(order)
+    assert len(errors) >= 1
+
+
+def test_validate_order_valid(app, seeded_member):
+    from app.services import order_service
+    from app.services.versioning_service import validate_order
+    order = order_service.create_order(member_id=seeded_member.id, subtotal=10.0)
+    errors = validate_order(order)
+    assert errors == []
+
+
+def test_rollback_entity_deleted_raises(app, seeded_member):
+    import pytest
+    from app.db import db
+    from app.services import versioning_service
+    from app.services.versioning_service import VersioningError
+    versioning_service.create_snapshot("member", seeded_member.id)
+    mid = seeded_member.id
+    db.session.delete(seeded_member)
+    db.session.commit()
+    with pytest.raises(VersioningError, match="not found"):
+        versioning_service.rollback("member", mid)
