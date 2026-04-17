@@ -207,6 +207,63 @@ def test_points_expiry(app, client, logged_in_staff, seeded_member):
     assert points_service.get_balance(seeded_member.id) == 0
 
 
+def test_redeem_missing_field_returns_400(client, logged_in_staff):
+    resp = client.post("/api/points/redeem", json={"member_id": 1, "order_id": 1})
+    assert resp.status_code == 400
+    assert "points" in resp.get_json()["error"]
+
+
+def test_redeem_invalid_type_returns_400(client, logged_in_staff, seeded_member):
+    resp = client.post("/api/points/redeem", json={
+        "member_id": "abc", "order_id": 1, "points": 10,
+    })
+    assert resp.status_code == 400
+
+
+def test_redeem_order_not_found_returns_404(client, logged_in_staff, seeded_member):
+    resp = client.post("/api/points/redeem", json={
+        "member_id": seeded_member.id, "order_id": 99999, "points": 10,
+    })
+    assert resp.status_code == 404
+
+
+def test_redeem_member_mismatch_returns_400(app, client, logged_in_staff, seeded_member):
+    from app.services import auth_service, member_service, order_service
+    other = member_service.create_member(name="Other", phone_number="5550000001")
+    order = order_service.create_order(member_id=other.id, subtotal=100.0)
+    resp = client.post("/api/points/redeem", json={
+        "member_id": seeded_member.id,
+        "order_id": order.id,
+        "points": 5,
+    })
+    assert resp.status_code == 400
+    assert "belong" in resp.get_json()["error"]
+
+
+def test_redeem_wrong_state_returns_400(app, client, logged_in_staff, seeded_member):
+    from app.services import order_service
+    from app.db import db
+    order = order_service.create_order(member_id=seeded_member.id, subtotal=50.0)
+    order.status = "fulfilled"
+    db.session.commit()
+    resp = client.post("/api/points/redeem", json={
+        "member_id": seeded_member.id, "order_id": order.id, "points": 5,
+    })
+    assert resp.status_code == 400
+
+
+def test_points_balance_endpoint(client, logged_in_staff, seeded_member):
+    resp = client.get(f"/api/points/balance/{seeded_member.id}")
+    assert resp.status_code == 200
+    assert "balance" in resp.get_json()
+
+
+def test_points_history_endpoint(client, logged_in_staff, seeded_member):
+    resp = client.get(f"/api/points/history/{seeded_member.id}")
+    assert resp.status_code == 200
+    assert "results" in resp.get_json()
+
+
 def test_daily_redemption_limit_triggers_flag(
     app, client, logged_in_staff, seeded_member
 ):

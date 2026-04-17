@@ -218,3 +218,38 @@ def test_api_requires_auth(client):
         "amount": 10.0,
     })
     assert resp.status_code == 401
+
+
+def test_api_credit_missing_field_returns_400(client, logged_in_staff):
+    resp = client.post("/api/stored-value/credit", json={"member_id": 1})
+    assert resp.status_code == 400
+
+
+def test_api_credit_invalid_type_returns_400(client, logged_in_staff, seeded_member):
+    resp = client.post("/api/stored-value/credit", json={
+        "member_id": "abc", "amount": 10.0,
+    })
+    assert resp.status_code == 400
+
+
+def test_api_debit_missing_field_returns_400(client, logged_in_staff):
+    resp = client.post("/api/stored-value/debit", json={"member_id": 1})
+    assert resp.status_code == 400
+
+
+def test_api_debit_invalid_order_id_returns_400(client, logged_in_staff, seeded_member):
+    from app.services import stored_value_service
+    stored_value_service.credit(member_id=seeded_member.id, amount=50.0)
+    resp = client.post("/api/stored-value/debit", json={
+        "member_id": seeded_member.id,
+        "amount": 5.0,
+        "order_id": "notanint",
+    })
+    assert resp.status_code == 400
+
+
+def test_api_debit_insufficient_balance_returns_400(client, logged_in_staff, seeded_member):
+    resp = client.post("/api/stored-value/debit", json={
+        "member_id": seeded_member.id, "amount": 99999.0,
+    })
+    assert resp.status_code == 400

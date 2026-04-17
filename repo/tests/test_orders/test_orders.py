@@ -324,6 +324,41 @@ def test_kitchen_cannot_create_order(client, logged_in_kitchen, seeded_member, a
     assert len(denials) >= 1
 
 
+def test_create_order_invalid_member_id_type_returns_400(client, logged_in_staff):
+    resp = client.post("/api/orders", json={"member_id": "abc", "subtotal": 10.0})
+    assert resp.status_code == 400
+    assert "member_id" in resp.get_json()["error"]
+
+
+def test_get_order_not_found_returns_404(client, logged_in_staff):
+    resp = client.get("/api/orders/99999")
+    assert resp.status_code == 404
+
+
+def test_get_receipt_not_found_returns_404(client, logged_in_staff):
+    resp = client.get("/api/orders/99999/receipt")
+    assert resp.status_code == 404
+
+
+def test_get_print_receipt_not_found_returns_404(client, logged_in_staff):
+    resp = client.get("/api/orders/99999/receipt/print")
+    assert resp.status_code == 404
+
+
+def test_pay_order_invalid_redeem_points_type_ignored(
+    client, logged_in_staff, seeded_member
+):
+    resp = client.post(
+        "/api/orders", json={"member_id": seeded_member.id, "subtotal": 10.0}
+    )
+    order_id = resp.get_json()["id"]
+    resp = client.post(
+        f"/api/orders/{order_id}/pay", json={"redeem_points": "notanint"}
+    )
+    assert resp.status_code == 200
+    assert resp.get_json()["status"] == "paid"
+
+
 def test_kitchen_can_advance_order(client, logged_in_staff, seeded_member, app):
     """Kitchen has 'advance' permission — confirm cross-role flow."""
     from app.services import auth_service
