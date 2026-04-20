@@ -65,10 +65,13 @@ The fastest way to run the project. Docker handles all dependencies; no local Py
 ### 1. Run the application server
 
 ```bash
-docker build -t wildlifelens .
-docker run --rm -p 5000:5000 \
-  -e SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") \
-  wildlifelens
+docker-compose up
+```
+
+Or with the newer Docker CLI plugin:
+
+```bash
+docker compose up
 ```
 
 On startup the container automatically runs `seed.py`, which creates one demo user per role, then starts the server. Open http://localhost:5000 in your browser and log in with any of the credentials in the table below.
@@ -125,12 +128,9 @@ The script is idempotent — re-running it skips users that already exist.
 
 ## Run (local, without Docker)
 
-```bash
-python -m venv .venv
-.venv/Scripts/activate        # Windows
-source .venv/bin/activate     # Linux / macOS
-pip install -r requirements.txt
+> Docker is the recommended and supported startup method. The steps below are for development reference only; the project is not validated outside Docker.
 
+```bash
 # Required: set a secret key (app refuses to start with the default)
 # Windows:
 set SECRET_KEY=your-secret-key-here

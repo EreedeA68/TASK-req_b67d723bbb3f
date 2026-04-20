@@ -12,6 +12,6 @@ build/
 *.db
 *.sqlite3
 exports/
-test_exports/
+/test_exports/
 .env
 *.log
